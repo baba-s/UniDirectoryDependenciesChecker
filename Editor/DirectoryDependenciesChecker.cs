@@ -18,12 +18,7 @@ namespace Kogane.Internal
 		private const string NAME           = "UniDirectoryDependenciesChecker";
 		private const string MENU_ITEM_NAME = "Assets/" + NAME + "/フォルダ内のアセットがフォルダ外のアセットを参照していないか確認";
 		private const string LOG_TAG        = "[" + NAME + "]";
-
-		//================================================================================
-		// デリゲート（static）
-		//================================================================================
-		public static Action OnCheck { private get; set; }
-
+		
 		//================================================================================
 		// 関数（static）
 		//================================================================================
@@ -33,12 +28,6 @@ namespace Kogane.Internal
 		[MenuItem( MENU_ITEM_NAME )]
 		private static void Check()
 		{
-			if ( OnCheck != null )
-			{
-				OnCheck();
-				return;
-			}
-
 			var canCheck = CanCheck();
 
 			if ( !canCheck )
