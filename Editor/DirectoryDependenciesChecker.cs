@@ -4,20 +4,19 @@ using System.IO;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
-using Object = UnityEngine.Object;
 
-namespace UniDirectoryDependenciesChecker
+namespace Kogane.Internal
 {
 	/// <summary>
 	/// 指定したフォルダ内のアセットがフォルダ外のアセットを参照していないかどうか確認するエディタ拡張
 	/// </summary>
-	public static class DirectoryDependenciesChecker
+	internal static class DirectoryDependenciesChecker
 	{
 		//================================================================================
 		// 定数
 		//================================================================================
 		private const string NAME           = "UniDirectoryDependenciesChecker";
-		private const string MENU_ITEM_NAME = "Assets/" + NAME + "/簡易依存関係チェック";
+		private const string MENU_ITEM_NAME = "Assets/" + NAME + "/フォルダ内のアセットがフォルダ外のアセットを参照していないか確認";
 		private const string LOG_TAG        = "[" + NAME + "]";
 
 		//================================================================================
@@ -52,7 +51,13 @@ namespace UniDirectoryDependenciesChecker
 			var path         = AssetDatabase.GetAssetPath( obj );
 			var dependencies = string.Join( "\n", GetList( path ) );
 
-			Debug.Log( $"{LOG_TAG}\n{dependencies}" );
+			if ( dependencies.Length <= 0 )
+			{
+				Debug.Log( $"{LOG_TAG} 「{path}」フォルダ内のアセットはフォルダ外のアセットを参照していません" );
+				return;
+			}
+
+			Debug.LogWarning( $"{LOG_TAG}「{path}」フォルダ内のアセットはフォルダ外のアセットを参照しています\n{dependencies}" );
 		}
 
 		/// <summary>
@@ -79,17 +84,14 @@ namespace UniDirectoryDependenciesChecker
 
 			var roots = Directory
 					.GetFiles( path, "*.*", SearchOption.AllDirectories )
-					.Select( c => c.Replace( "\\", "/" ) )
-					.Select( c => AssetDatabase.LoadAssetAtPath( c, typeof( Object ) ) )
-					.Where( c => c != null )
+					.Select( x => x.Replace( "\\", "/" ) )
 					.ToArray()
 				;
 
-			var dependencies = EditorUtility
-					.CollectDependencies( roots )
-					.Select( c => AssetDatabase.GetAssetPath( c ) )
-					.Distinct()
-					.Where( c => !c.Contains( path ) )
+			var dependencies = AssetDatabase
+					.GetDependencies( roots )
+					.Where( x => !x.StartsWith( path ) )
+					.Where( x => !x.EndsWith( ".cs" ) )
 					.OrderBy( c => c )
 				;
 
